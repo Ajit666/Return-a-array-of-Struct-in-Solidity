@@ -1,0 +1,49 @@
+pragma solidity ^0.4.21;
+
+contract Voting {
+    
+  event AddEntry(bytes32 head,uint number,string name,bytes32 next);
+  uint length = 0;
+  
+  struct Object {
+    bytes32 next;
+    uint userId;
+    string name;
+    uint gameId;
+    int  qty;
+  }
+
+  bytes32  head;
+  bytes32  current; 
+  mapping (bytes32 => Object) bbjects;
+
+  function addEntry(uint _userId, string _name, uint _gameId, int _qty) public returns (bool) {
+    Object memory object = Object(head,_userId, _name, _gameId, _qty);
+    bytes32 id = keccak256(object.userId, object.name, object.gameId, object.qty, now, length);
+    bbjects[id] = object;
+    head = id;
+    length = length+1;    
+  }
+  
+    //needed for external contract access to struct
+  function getEntry(bytes32 _id) public view returns (bytes32, uint, string, uint, int) {
+        return (bbjects[_id].next, bbjects[_id].userId, bbjects[_id].name, bbjects[_id].gameId, bbjects[_id].qty);
+  }
+  
+ function getCurrentHead() public view returns(bytes32){
+        return head;
+ }
+
+  
+  event LogRecord(string mssg, string name, uint userid, uint gameId, int qty );
+  
+  //Its not gas efficient
+  function getAllRecords() public { 
+    current = head;           
+    while( current != 0 ) {     
+      emit LogRecord("This is new current value : ", bbjects[current].name, bbjects[current].userId, bbjects[current].gameId, bbjects[current].qty);
+      current = bbjects[current].next;
+    }   
+  }
+
+}
